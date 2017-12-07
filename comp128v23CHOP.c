@@ -72,7 +72,7 @@ static const uint8_t table0[256] = {
 
 
 static void
-_comp128v23_internal(uint8_t *output, const uint8_t *kxor, const uint8_t *rand)
+_comp128v23_internal(uint8_t *output, const uint8_t *kxor, const uint8_t *rand, int iteration)
 {
 	uint8_t temp[16];
 	uint8_t km_rm[32];
@@ -101,12 +101,32 @@ _comp128v23_internal(uint8_t *output, const uint8_t *kxor, const uint8_t *rand)
 
 	memset(output,0,16);
 // long shot, chopping to just sres 4 byte
-	for (i=0; i<16; i++) {
+int chop =0;
+if(iteration == 8){
+	chop=11;
+}
+	for (i=chop; i<16; i++) {
 		for (j=0; j<8; j++) {
 			output[i] ^= (((km_rm[(19*(j+8*i)+19)%256/8]>>(3*j+3)%8)&1)<< j);
+			}
+			
 		}
 	}
-}
+/*
+printf("\n\n kmrm: ");
+
+for(int y=0;y<32;y++){
+        printf(" %x",km_rm[y]);
+        }
+*/
+/*	printf("\n\n output: ");
+
+for(int y=0;y<16;y++){
+        printf(" %x",output[y]);
+        }
+*/
+	
+//}
 
 /*! Perform COMP128v3 algorithm
  *  \param[in] ki Secret Key K(i) of subscriber
@@ -148,13 +168,18 @@ for(int k=0;k<16;k++){
         }
 */
 	for (i=0; i<8; i++) {
-		_comp128v23_internal(rand_mix,k_mix,rand_mix);
+		_comp128v23_internal(rand_mix,k_mix,rand_mix,i);
 	}
 //long shot
 	for (i=0; i<4; i++) {
 		output[i] = rand_mix[15-i];
 	}
+/*	printf("\n\n output2: ");
 
+for(int k=0;k<4;k++){
+        printf(" %x",output[k]);
+        }
+*/
 	//memmove(output + 4, output + 8, 8); /* ignore bytes 4..7 */
 
 	/* the algorithm uses 16 bytes until this point, but only 12 bytes are effective
